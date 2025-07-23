@@ -1,77 +1,53 @@
-name: CI/CD Pipeline - Frontend
- 
+name: CI Pipeline
+
 on:
-
   push:
-
     branches:
-
       - main
- 
-env:
+  pull_request:
 
-  DOCKER_IMAGE: babumohan/cake-app-2:V2
-
-  AWS_REGION: eu-west-1
- 
 jobs:
-
-  build-and-deploy:
-
+  build:
     runs-on: ubuntu-latest
- 
+
     steps:
+      # Checkout code
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Checkout Repository
+      # Node.js setup
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
-      uses: actions/checkout@v4
- 
-    - name: Set up Node.js
+      # Install dependencies
+      - name: Install Dependencies
+        run: npm install
 
-      uses: actions/setup-node@v4
+      # Build the app
+      - name: Build Project
+        run: npm run build
 
-      with:
+      # SonarQube Scan
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@v2
+        with:
+          args: >
+            -Dsonar.projectKey=cake-frontend
+            -Dsonar.projectName=Cake Frontend
+            -Dsonar.sources=.
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
-        node-version: '18'
- 
-    - name: Install Dependencies
+      # Docker Build & Push
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      run: npm install
- 
-    - name: SonarQube Scan
-
-      uses: sonarsource/sonarqube-scan-action@v2
-
-      with:
-
-        projectBaseDir: .
-
-      env:
-
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
- 
-    - name: Set up Docker Buildx
-
-      uses: docker/setup-buildx-action@v3
- 
-    - name: Log in to DockerHub
-
-      uses: docker/login-action@v3
-
-      with:
-
-        username: ${{ secrets.DOCKER_USERNAME }}
-
-        password: ${{ secrets.DOCKER_PASSWORD }}
- 
-    - name: Build and Push Docker Image
-
-      run: |
-
-        docker build -t $DOCKER_IMAGE .
-
-        docker push $DOCKER_IMAGE
-
- 
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t babumohan/cake-app-1:latest .
+          docker push babumohan/cake-app-1:latest
