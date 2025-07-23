@@ -34,6 +34,8 @@ jobs:
         uses: sonarsource/sonarqube-scan-action@v2
         with:
           args: >
+           -Dsonar.projectKey=sonar.projectKey=cake-frontend-project
+           -Dsonar.projectSources=sources
             -Dsonar.sources=.
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
