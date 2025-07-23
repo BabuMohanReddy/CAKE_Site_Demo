@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  DOCKER_IMAGE: docker.io/babumohan/cake-frontend:V2
+  DOCKER_IMAGE: docker.io/babumohan/cake-frontend:V3
   AWS_REGION: us-east-2
 
 jobs:
