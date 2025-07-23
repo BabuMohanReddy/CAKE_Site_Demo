@@ -1,53 +1,52 @@
-name: CI Pipeline
+name: CI/CD Pipeline - Frontend
 
 on:
   push:
     branches:
       - main
-  pull_request:
+
+env:
+  DOCKER_IMAGE: docker.io/babumohan/cake-frontend:V2
+  AWS_REGION: us-east-2
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout code
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # Node.js setup
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      # Install dependencies
       - name: Install Dependencies
         run: npm install
 
-      # Build the app
-      - name: Build Project
-        run: npm run build
-
-      # SonarQube Scan
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@v2
         with:
+          projectBaseDir: .
           args: >
-           -Dsonar.projectKey=sonar.projectKey=cake-frontend-project
-           -Dsonar.projectSources=sources
-            -Dsonar.sources=.
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
-            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.organization=my-org
+            -Dsonar.projectKey=my-Java-web-app
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      # Docker Build & Push
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Log in to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push Docker Image
-        run: |
-          docker build -t babumohan/cake-app-1:latest .
-          docker push babumohan/cake-app-1:latest
+      - name: Build Docker Image
+        run: docker build -t $DOCKER_IMAGE .
+
+      - name: Push Docker Image
+        run: docker push $DOCKER_IMAGE
